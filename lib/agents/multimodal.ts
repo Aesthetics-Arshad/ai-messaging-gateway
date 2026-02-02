@@ -130,12 +130,10 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 
 /**
  * Process video by extracting audio and transcribing
- * Note: This requires ffmpeg installed. If not available, returns error message.
  */
 export async function processVideo(videoUrl: string, caption?: string): Promise<string> {
   const tempDir = os.tmpdir();
   const videoFile = path.join(tempDir, `video-${Date.now()}.mp4`);
-  const audioFile = path.join(tempDir, `audio-${Date.now()}.wav`);
   
   try {
     console.log('🎬 Processing video:', videoUrl);
@@ -148,58 +146,13 @@ export async function processVideo(videoUrl: string, caption?: string): Promise<
     });
     
     fs.writeFileSync(videoFile, Buffer.from(response.data));
-    console.log('📁 Video downloaded');
-    
-    // Try to extract audio using ffmpeg if available
-    let audioData: Buffer;
-    
-    try {
-      // Check if ffmpeg is available by trying to run it
-      await new Promise<void>((resolve, reject) => {
-        const { exec } = require('child_process');
-        exec('ffmpeg -version', (error: any) => {
-          if (error) reject(new Error('ffmpeg not found'));
-          else resolve();
-        });
-      });
-      
-      // Extract audio using ffmpeg
-      await new Promise<void>((resolve, reject) => {
-        const { spawn } = require('child_process');
-        const ffmpeg = spawn('ffmpeg', [
-          '-i', videoFile,
-          '-vn', // no video
-          '-acodec', 'pcm_s16le',
-          '-ar', '16000',
-          '-ac', '1',
-          '-y',
-          audioFile
-        ]);
-        
-        ffmpeg.on('close', (code: number) => {
-          if (code === 0) resolve();
-          else reject(new Error(`ffmpeg exited with code ${code}`));
-        });
-        
-        ffmpeg.on('error', reject);
-      });
-      
-      audioData = fs.readFileSync(audioFile);
-      console.log('✅ Audio extracted from video');
-      
-    } catch (ffmpegError) {
-      console.log('⚠️ ffmpeg not available, trying to transcribe video file directly...');
-      // Some versions of Whisper can handle video files directly, try that
-      audioData = fs.readFileSync(videoFile);
-    }
-    
-    // Write audio to temp file for transcription
-    const tempAudio = path.join(tempDir, `video-audio-${Date.now()}.wav`);
-    fs.writeFileSync(tempAudio, audioData);
-    
-    // Transcribe
+    console.log('📁 Video downloaded to temporary storage');
+
+    // NOTE: On Vercel, we avoid using ffmpeg or spawning child processes.
+    // Whisper via Groq can often handle common video containers directly,
+    // so we pass the video file as-is for audio transcription.
     const transcription = await groq.audio.transcriptions.create({
-      file: fs.createReadStream(tempAudio),
+      file: fs.createReadStream(videoFile),
       model: 'whisper-large-v3',
       response_format: 'text',
       language: 'en'
@@ -210,20 +163,16 @@ export async function processVideo(videoUrl: string, caption?: string): Promise<
     
     // Cleanup
     fs.unlinkSync(videoFile);
-    if (fs.existsSync(audioFile)) fs.unlinkSync(audioFile);
-    fs.unlinkSync(tempAudio);
     
     const captionText = caption ? `Caption: "${caption}"\n` : '';
     return `[Video Analysis]:\n${captionText}Audio Transcription: ${text}`;
     
   } catch (error: any) {
     // Cleanup
-    [videoFile, audioFile].forEach(f => {
-      if (fs.existsSync(f)) fs.unlinkSync(f);
-    });
+    if (fs.existsSync(videoFile)) fs.unlinkSync(videoFile);
     
     console.error('❌ Video processing error:', error);
-    return `[Error: Could not process video - ${error.message}. Note: Video processing requires ffmpeg to be installed on the server.]`;
+    return `[Error: Could not process video - ${error.message}. Note: Video processing is limited in this environment and large or unsupported video formats may fail.]`;
   }
 }
 
