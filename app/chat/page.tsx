@@ -154,83 +154,150 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <header className="bg-white border-b px-6 py-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-bold">AI Agent Orchestrator</h1>
-          <p className="text-sm text-gray-500">
-            {connectionStatus === 'streaming' && <span className="text-blue-500">● Streaming...</span>}
-          </p>
-        </div>
-        <a href="/dashboard" className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">
-          Dashboard
-        </a>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-400 mt-20">
-            <h2 className="text-2xl mb-2">Welcome to the AI Gateway</h2>
-            <p>I can help with complex queries using multi-step reasoning.</p>
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      <div className="mx-auto flex h-screen max-w-6xl flex-col px-4 py-6 md:px-8">
+        <header className="flex items-center justify-between border-b border-white/5 pb-3">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight">AI Agent Orchestrator</h1>
+            <p className="mt-1 text-xs text-slate-400 md:text-sm">
+              Orchestrated multi-step reasoning with RAG, tools, and platform webhooks.
+            </p>
           </div>
-        )}
+          <div className="flex items-center gap-3 text-xs md:text-sm">
+            <span
+              className={`flex items-center gap-1 rounded-full px-3 py-1 ${
+                connectionStatus === 'streaming'
+                  ? 'bg-emerald-500/10 text-emerald-300'
+                  : 'bg-slate-800 text-slate-300'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  connectionStatus === 'streaming' ? 'bg-emerald-400' : 'bg-slate-500'
+                }`}
+              />
+              {connectionStatus === 'streaming' ? 'Streaming response' : 'Idle'}
+            </span>
+            <a
+              href="/dashboard"
+              className="hidden rounded-full border border-white/10 px-3 py-1 text-slate-100 hover:bg-white/5 md:inline-flex"
+            >
+              Dashboard
+            </a>
+          </div>
+        </header>
 
-        {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-3xl rounded-lg p-4 ${
-              message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border shadow-sm'
-            }`}>
-              <div className="text-sm opacity-70 mb-1">
-                {message.role === 'user' ? 'You' : 'AI Agent'}
-              </div>
-              
-              <div className="whitespace-pre-wrap">
-                {message.content || (message.isStreaming && 'Thinking...')}
-              </div>
-
-              {message.steps && message.steps.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200 text-xs space-y-1">
-                  {message.steps.slice(-3).map((step, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-gray-500">
-                      {step.type === 'status' && <span>⏳ {step.message}</span>}
-                      {step.type === 'thought' && <span>💭 Thinking...</span>}
-                      {step.type === 'action' && <span>🔧 Executing: {step.tool}</span>}
-                      {step.type === 'retrieval' && <span>📚 Found {step.count} documents</span>}
-                      {step.type === 'progress' && <span>🔄 Step {step.step}/{step.total}</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {message.metadata && (
-                <div className="mt-2 text-xs text-gray-400">
-                  Confidence: {Math.round(message.metadata.confidence * 100)}% | {message.metadata.executionTime}ms
-                </div>
-              )}
+        <div className="mt-4 flex flex-1 gap-4 md:gap-6">
+          <aside className="hidden w-64 flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-200 shadow-sm md:flex">
+            <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-400">
+              <span>Session</span>
+              <span className="font-mono text-[10px] text-slate-500">ID: {userId.current.slice(-6)}</span>
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+            <p className="text-xs text-slate-300">
+              This panel can later show conversation history, platform breakdowns, or step-by-step traces for
+              debugging.
+            </p>
+            <div className="mt-4 space-y-2 text-[11px] text-slate-400">
+              <div className="flex items-center justify-between">
+                <span>RAG</span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300">Enabled</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Webhooks</span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300">Online</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Inngest</span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300">Jobs</span>
+              </div>
+            </div>
+          </aside>
 
-      <div className="bg-white border-t p-4">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything..."
-            className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            {isLoading ? 'Processing...' : 'Send'}
-          </button>
-        </form>
+          <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-slate-900/60 shadow-sm">
+            <div className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6">
+              {messages.length === 0 && (
+                <div className="mt-10 text-center text-slate-400">
+                  <h2 className="text-xl font-medium text-slate-100 md:text-2xl">Welcome to your AI workspace</h2>
+                  <p className="mt-2 text-sm md:text-base">
+                    Ask a question to kick off a multi-step workflow. I’ll plan, retrieve, and respond.
+                  </p>
+                </div>
+              )}
+
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-xl rounded-2xl px-4 py-3 text-sm md:text-base ${
+                      message.role === 'user'
+                        ? 'bg-emerald-500 text-slate-950'
+                        : 'border border-white/10 bg-slate-900 text-slate-50'
+                    }`}
+                  >
+                    <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-300/80">
+                      {message.role === 'user' ? 'You' : 'AI Agent'}
+                    </div>
+
+                    <div className="whitespace-pre-wrap leading-relaxed">
+                      {message.content || (message.isStreaming && 'Thinking...')}
+                    </div>
+
+                    {message.steps && message.steps.length > 0 && (
+                      <div className="mt-3 border-t border-white/10 pt-2 text-xs text-slate-300">
+                        <div className="mb-1 font-medium text-slate-200/90">Recent reasoning steps</div>
+                        <div className="space-y-1">
+                          {message.steps.slice(-3).map((step, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              {step.type === 'status' && <span>⏳ {step.message}</span>}
+                              {step.type === 'thought' && <span>💭 Thinking…</span>}
+                              {step.type === 'action' && <span>🔧 Executing: {step.tool}</span>}
+                              {step.type === 'retrieval' && <span>📚 Found {step.count} documents</span>}
+                              {step.type === 'progress' && (
+                                <span>
+                                  🔄 Step {step.step}/{step.total}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {message.metadata && (
+                      <div className="mt-2 text-[11px] text-slate-400">
+                        Confidence: {Math.round(message.metadata.confidence * 100)}% ·{' '}
+                        {message.metadata.executionTime}ms
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="border-t border-white/10 bg-slate-950/70 p-3 md:p-4">
+              <form onSubmit={handleSubmit} className="flex w-full max-w-3xl items-center gap-2 md:gap-3">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask anything about your product, users, or data…"
+                  className="flex-1 rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 md:px-4 md:py-2.5"
+                  disabled={isLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !input.trim()}
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 md:px-5 md:py-2.5"
+                >
+                  {isLoading ? 'Processing…' : 'Send'}
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

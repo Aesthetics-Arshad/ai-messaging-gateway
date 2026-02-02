@@ -1,10 +1,24 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
-});
+/**
+ * Lazily get a Pinecone index.
+ * If env vars are missing (e.g. during build or on deployments without RAG),
+ * we gracefully degrade so the app can still build and run.
+ */
+function getPineconeIndex() {
+  const apiKey = process.env.PINECONE_API_KEY;
+  const indexName = process.env.PINECONE_INDEX;
 
-const index = pinecone.index(process.env.PINECONE_INDEX!);
+  if (!apiKey || !indexName) {
+    console.warn(
+      '[RAG] Pinecone not configured (missing PINECONE_API_KEY or PINECONE_INDEX). RAG features will be disabled.'
+    );
+    return null;
+  }
+
+  const client = new Pinecone({ apiKey });
+  return client.index(indexName);
+}
 
 // SAFE chunking - no infinite loops
 function safeChunkText(text: string, maxSize: number = 500): string[] {
@@ -56,6 +70,13 @@ export async function ingestDocument(text: string, metadata: { source: string })
   console.log(`[RAG] Start: ${metadata.source}, length: ${text.length}`);
   
   try {
+    const index = getPineconeIndex();
+    if (!index) {
+      // RAG disabled – pretend we processed 0 chunks so the rest of the app continues to work.
+      console.log('[RAG] Skipping ingest because Pinecone is not configured.');
+      return 0;
+    }
+
     const chunks = safeChunkText(text, 500);
     console.log(`[RAG] Created ${chunks.length} chunk(s)`);
     
@@ -93,6 +114,12 @@ export async function ingestDocument(text: string, metadata: { source: string })
 export async function queryPinecone(query: string, topK = 3) {
   try {
     console.log('[RAG] Query:', query.substring(0, 50));
+
+    const index = getPineconeIndex();
+    if (!index) {
+      console.log('[RAG] Skipping query because Pinecone is not configured.');
+      return [];
+    }
     
     const results = await index.query({
       vector: mockEmbed(query),
