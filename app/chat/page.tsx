@@ -16,6 +16,9 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'streaming'>('idle');
+  const [ragFile, setRagFile] = useState<File | null>(null);
+  const [ragUploading, setRagUploading] = useState(false);
+  const [ragResult, setRagResult] = useState<any | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const userId = useRef(`user-${Math.random().toString(36).substr(2, 9)}`);
   
@@ -153,6 +156,30 @@ export default function ChatPage() {
     ));
   };
 
+  const handleRagUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ragFile || ragUploading) return;
+
+    setRagUploading(true);
+    setRagResult(null);
+
+    const formData = new FormData();
+    formData.append('file', ragFile);
+
+    try {
+      const res = await fetch('/api/ingest', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      setRagResult(data);
+    } catch (error) {
+      setRagResult({ error: 'Upload failed' });
+    } finally {
+      setRagUploading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto flex h-screen max-w-6xl flex-col px-4 py-6 md:px-8">
@@ -188,7 +215,7 @@ export default function ChatPage() {
         </header>
 
         <div className="mt-4 flex flex-1 gap-4 md:gap-6">
-          <aside className="hidden w-64 flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-200 shadow-sm md:flex">
+          <aside className="hidden w-72 flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-200 shadow-sm md:flex">
             <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-400">
               <span>Session</span>
               <span className="font-mono text-[10px] text-slate-500">ID: {userId.current.slice(-6)}</span>
@@ -210,6 +237,41 @@ export default function ChatPage() {
                 <span>Inngest</span>
                 <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300">Jobs</span>
               </div>
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Knowledge base
+              </div>
+              <p className="mb-3 text-[11px] text-slate-300">
+                Upload a small .txt or .md file. I’ll use it as context for future answers when it’s relevant.
+              </p>
+              <form onSubmit={handleRagUpload} className="space-y-2">
+                <input
+                  type="file"
+                  accept=".txt,.md,.json"
+                  onChange={(e) => setRagFile(e.target.files?.[0] || null)}
+                  className="block w-full text-[11px] text-slate-300 file:mr-2 file:rounded-md file:border-0 file:bg-slate-800 file:px-2 file:py-1 file:text-[11px] file:font-medium file:text-slate-50 hover:file:bg-slate-700"
+                />
+                <button
+                  type="submit"
+                  disabled={!ragFile || ragUploading}
+                  className="w-full rounded-md bg-emerald-500 px-2 py-1 text-[11px] font-medium text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+                >
+                  {ragUploading ? 'Uploading…' : 'Upload & index'}
+                </button>
+              </form>
+              {ragResult && (
+                <div
+                  className={`mt-2 rounded-md px-2 py-1 text-[11px] ${
+                    ragResult.success ? 'bg-emerald-500/10 text-emerald-200' : 'bg-red-500/10 text-red-200'
+                  }`}
+                >
+                  {ragResult.success
+                    ? `Indexed ${ragResult.chunks} chunk(s) from ${ragResult.filename}.`
+                    : `RAG error: ${ragResult.error}`}
+                </div>
+              )}
             </div>
           </aside>
 

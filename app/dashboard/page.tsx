@@ -1,109 +1,156 @@
 'use client';
 
-import { useState } from 'react';
-
 export default function Dashboard() {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
-
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/ingest', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      setResult(data);
-    } catch (error) {
-      setResult({ error: 'Upload failed' });
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-8">AI Messaging Gateway Dashboard</h1>
-      
-      {/* Status Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {[
-          { name: 'Telegram', status: 'Active', color: 'green' },
-          { name: 'WhatsApp', status: 'Pending Setup', color: 'yellow' },
-          { name: 'Instagram', status: 'Pending Setup', color: 'yellow' },
-          { name: 'LinkedIn', status: 'Pending Setup', color: 'yellow' },
-          { name: 'Snapchat', status: 'Pending Setup', color: 'yellow' },
-          { name: 'AI Brain', status: 'Operational', color: 'green' },
-        ].map((platform) => (
-          <div key={platform.name} className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">{platform.name}</h2>
-            <span className={`inline-block px-2 py-1 rounded text-sm ${
-              platform.color === 'green' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              ● {platform.status}
+    <main className="min-h-screen bg-slate-950 text-slate-50">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <header className="flex flex-col justify-between gap-3 border-b border-white/5 pb-4 md:flex-row md:items-center">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Messaging Gateway Overview
+            </h1>
+            <p className="mt-1 text-sm text-slate-400">
+              Two messaging platforms are live. Additional channels are being integrated.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs md:text-sm">
+            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-300">
+              ● System healthy
+            </span>
+            <span className="rounded-full border border-white/10 px-3 py-1 text-slate-200">
+              Chat UI at <code className="text-[11px]">/chat</code>
             </span>
           </div>
-        ))}
-      </div>
+        </header>
 
-      {/* Knowledge Base Upload */}
-      <div className="bg-white p-6 rounded-lg shadow mb-8">
-        <h2 className="text-xl font-semibold mb-4">Upload Knowledge Base</h2>
-        <p className="text-gray-600 mb-4">
-          Upload .txt or .md files to train your AI assistant. The AI will use this information to answer questions.
-        </p>
-        
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div>
-            <input
-              type="file"
-              accept=".txt,.md"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
+        <section className="grid gap-4 md:grid-cols-[minmax(0,2.3fr)_minmax(0,1.7fr)]">
+          {/* Platforms card */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-100 md:text-base">
+                    Messaging platforms
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Telegram and WhatsApp are active. Other channels are in progress.
+                  </p>
+                </div>
+                <div className="text-right text-xs text-slate-400">
+                  <div>2 active</div>
+                  <div className="text-slate-500">3 in progress</div>
+                </div>
+              </div>
+              <div className="grid gap-3 text-xs md:grid-cols-2 md:text-sm">
+                <div className="rounded-xl border border-emerald-400/40 bg-emerald-500/5 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-50">Telegram</span>
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300">
+                      Active
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Incoming webhook and outbound bot messaging are configured.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-400/40 bg-emerald-500/5 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-50">WhatsApp</span>
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300">
+                      Active
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Connected via API. Outgoing replies are sent as text messages.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-200">Instagram</span>
+                    <span className="rounded-full bg-yellow-500/10 px-2 py-0.5 text-[11px] text-amber-200">
+                      In progress
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Webhook endpoint is in place. Authentication and messaging flow still to be completed.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-200">LinkedIn &amp; Snapchat</span>
+                    <span className="rounded-full bg-yellow-500/10 px-2 py-0.5 text-[11px] text-amber-200">
+                      In progress
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Outbound messaging helpers exist; inbound webhook flows are being wired up.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-200 shadow-sm md:text-sm">
+              <h2 className="text-sm font-semibold text-slate-100 md:text-base">System components</h2>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <div>
+                  <div className="text-xs font-medium text-slate-300">AI Brain</div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Groq-powered reasoning with planner, tools, and strict RAG rules.
+                  </p>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-300">RAG &amp; storage</div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Pinecone for vectors, Neon Postgres for conversations, Upstash Redis for cache.
+                  </p>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-300">Background jobs</div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Inngest functions handle async processing and periodic clean-up.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <button
-            type="submit"
-            disabled={!file || uploading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {uploading ? 'Uploading...' : 'Upload & Train'}
-          </button>
-        </form>
 
-        {result && (
-          <div className={`mt-4 p-4 rounded ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
-            {result.success ? (
-              <p className="text-green-700">
-                ✅ Successfully processed {result.chunks} chunks from {result.filename}
+          {/* Webhook / API card */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-200 shadow-sm md:text-sm">
+              <h2 className="text-sm font-semibold text-slate-100 md:text-base">Webhook endpoints</h2>
+              <p className="mt-1 text-xs text-slate-400">
+                Use these URLs when configuring platform webhooks and messaging integrations.
               </p>
-            ) : (
-              <p className="text-red-700">❌ {result.error}</p>
-            )}
-          </div>
-        )}
-      </div>
+              <div className="mt-3 space-y-2 font-mono text-[11px] md:text-xs">
+                <div className="rounded-lg bg-slate-900 px-3 py-2">
+                  Telegram&nbsp;&nbsp;→ <span className="text-emerald-200">/api/webhook/telegram</span>
+                </div>
+                <div className="rounded-lg bg-slate-900 px-3 py-2">
+                  WhatsApp&nbsp;&nbsp;→ <span className="text-emerald-200">/api/webhook/whatsapp</span>
+                </div>
+                <div className="rounded-lg bg-slate-900 px-3 py-2">
+                  Instagram&nbsp;→ <span className="text-slate-300">/api/webhook/instagram</span>
+                </div>
+                <div className="rounded-lg bg-slate-900 px-3 py-2">
+                  LinkedIn&nbsp;&nbsp;&nbsp;→ <span className="text-slate-300">/api/webhook/linkedin</span>
+                </div>
+                <div className="rounded-lg bg-slate-900 px-3 py-2">
+                  Snapchat&nbsp;→ <span className="text-slate-300">/api/webhook/snapchat</span>
+                </div>
+              </div>
+            </div>
 
-      {/* API Endpoints */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Webhook Endpoints</h2>
-        <div className="space-y-2 font-mono text-sm">
-          <div className="p-2 bg-gray-50 rounded">Telegram: /api/webhook/telegram</div>
-          <div className="p-2 bg-gray-50 rounded">WhatsApp: /api/webhook/whatsapp</div>
-          <div className="p-2 bg-gray-50 rounded">Instagram: /api/webhook/instagram</div>
-          <div className="p-2 bg-gray-50 rounded">LinkedIn: /api/webhook/linkedin</div>
-          <div className="p-2 bg-gray-50 rounded">Snapchat: /api/webhook/snapchat</div>
-        </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-200 shadow-sm md:text-sm">
+              <h2 className="text-sm font-semibold text-slate-100 md:text-base">Next steps</h2>
+              <ul className="mt-2 space-y-1 text-xs text-slate-400">
+                <li>• Connect more documents via the RAG upload panel on the chat screen.</li>
+                <li>• Point Telegram and WhatsApp webhooks to the URLs above.</li>
+                <li>• Monitor conversations and iterate on prompts and tools.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
