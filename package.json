@@ -1,0 +1,39 @@
+{
+  "name": "ai-messaging-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^4.13.11",
+    "@pinecone-database/pinecone": "^6.1.4",
+    "@vercel/kv": "^3.0.0",
+    "@vercel/postgres": "^0.10.0",
+    "ai": "^6.0.61",
+    "axios": "^1.13.4",
+    "dotenv": "^17.2.3",
+    "ffmpeg": "^0.0.4",
+    "groq-sdk": "^0.37.0",
+    "inngest": "^3.49.3",
+    "next": "^16.1.6",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-markdown": "^10.1.0",
+    "twilio": "^5.12.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.6",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
